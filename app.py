@@ -28,23 +28,24 @@ st.set_page_config(page_title="Reconocedor de razas de perro", page_icon="🐕",
 
 CSS = """
 <style>
-.hero {position: relative; background: linear-gradient(135deg, #5b3a29 0%, #b9652f 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; color: #ffffff; margin-bottom: 1.4rem; text-align: center;}
+.hero {position: relative; background: linear-gradient(135deg, #1f4d3a 0%, #3f8160 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; color: #ffffff; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
-.hero p {color: #f6e8da; font-size: 1.02rem; margin: 0.6rem 0 0 0;}
-.tips {border: 1px solid #ecd9c3; border-left: 5px solid #c0793f; background: #fbf3e8; color: #3a2a20; border-radius: 8px; padding: 1rem 1.4rem; margin: 0.8rem 0 1rem 0;}
-.tips h3 {color: #5b3a29; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.1rem;}
+.hero p {color: #e3f1e9; font-size: 1.02rem; margin: 0.6rem 0 0 0;}
+.tips {border: 1px solid #cfe3d6; border-left: 5px solid #3f8160; background: #f1f8f4; color: #22332a; border-radius: 8px; padding: 1rem 1.4rem; margin: 0.8rem 0 1rem 0;}
+.tips h3 {color: #1f4d3a; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.1rem;}
 .tips ul {margin: 0.3rem 0 0.4rem 0; padding-left: 1.2rem;}
-.tips li {margin: 0.2rem 0; color: #3a2a20;}
+.tips li {margin: 0.2rem 0; color: #22332a;}
+.result-head {margin: 1.6rem 0 1rem 0;}
+.result-head h2 {color: #1f4d3a; font-size: 1.9rem; font-weight: 700; line-height: 1.25; margin: 0; padding: 0;}
+.result-head p {color: #4b5d53; font-size: 1.05rem; margin: 0.4rem 0 0 0;}
 .card {display: flex; align-items: center; gap: 1.1rem; background: #ffffff; color: #1f2937; border-radius: 8px;
-       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #e6dccf;}
+       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #d5e5db;}
 .card .num {font-size: 2.2rem; line-height: 1; min-width: 2.6rem; text-align: center;}
 .card .name {font-size: 1.25rem; font-weight: 600; color: #1f2937;}
-.card .tag {font-size: 0.85rem; color: #6b7280;}
-.card.first {border: 2px solid #c0793f; background: #fdf0df; padding: 1.2rem 1.4rem;}
-.card.first .name {font-size: 1.7rem; font-weight: 700; color: #5b3a29;}
-.step {background: #f7f1ea; color: #2f241c; border-left: 5px solid #b9652f; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
-.step b {color: #8a4a1f;}
-.step .nuevo {border: 1px solid #b45309; color: #b45309; border-radius: 4px; padding: 0 0.45rem; font-size: 0.72rem; margin-left: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;}
+.note {display: flex; gap: 0.8rem; align-items: flex-start; background: #f6f8f7; border: 1px solid #e0e7e3; border-radius: 8px; padding: 0.9rem 1.2rem; margin: 1.2rem 0 0.4rem 0; color: #4b5d53; font-size: 0.95rem; line-height: 1.5;}
+.note .ico {font-size: 1.3rem; line-height: 1.3;}
+.step {background: #f1f8f4; color: #22332a; border-left: 5px solid #3f8160; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
+.step b {color: #1f4d3a;}
 .small {color: #6b7280; font-size: 0.9rem;}
 </style>
 """
@@ -136,8 +137,8 @@ Si no la tienes así, también puedes probar 😉
         st.session_state["analisis"] = {"img": img, "proba": proba, "result": result, "doubt": doubt, "steps": steps}
     a = st.session_state["analisis"]
     st.image(toRGB(a["img"]), caption="Tu foto", width=380)
-    st.markdown("### 🐾 Podría ser alguna de estas razas")
-    st.caption("Estas son las 3 razas a las que más se parece tu perro (sin ningún orden).")
+    st.markdown('<div class="result-head"><h2>🐾 Tu perro se parece a estas 3 razas</h2>'
+                '<p>Las razas más parecidas, sin ningún orden concreto.</p></div>', unsafe_allow_html=True)
     # las ponemos por orden alfabetico para que no parezca que hay una primera y una ultima
     names = sorted(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3])
     html = ""
@@ -146,30 +147,28 @@ Si no la tienes así, también puedes probar 😉
     st.markdown(html, unsafe_allow_html=True)
     if a["doubt"]:
         st.warning("No he podido separar bien al perro del fondo, así que este resultado es poco fiable. Prueba con otra foto que cumpla las condiciones.")
-    st.markdown('<p class="small">Solo conozco 120 razas. Si tu perro es mestizo o de otra raza, te enseño las que más se parecen. '
-                'Mira la pestaña <b>Especificaciones</b> para ver paso a paso qué ha hecho el programa con tu foto.</p>', unsafe_allow_html=True)
+    st.markdown('<div class="note"><div class="ico">💡</div><div>Si tu perro es mestizo o de una raza que no está entre las 120 que '
+                'reconoce, verás las más parecidas. En la pestaña <b>Especificaciones</b> puedes ver cómo se ha analizado tu foto.</div></div>', unsafe_allow_html=True)
 
 
 # titulo de un paso
-def stepTitle(text:str, new:bool=False) -> None:
-    extra = '<span class="nuevo">no visto en clase</span>' if new else ""
-    st.markdown('<div class="step">' + text + extra + '</div>', unsafe_allow_html=True)
+def stepTitle(text:str) -> None:
+    st.markdown('<div class="step">' + text + '</div>', unsafe_allow_html=True)
 
 
-# pestana 2: lo que hace el codigo con la foto, paso a paso
+# pestana 2: lo que hace el codigo con la foto
 def showSpecs() -> None:
     st.markdown("### 🐾 Cómo funciona")
     st.write("Todo está hecho con técnicas clásicas de visión por computador, **sin deep learning**. "
-             "Estos son los pasos que sigue el programa con cada foto.")
+             "Aquí se ve el procesamiento completo de tu foto: localización, segmentación, descripción y clasificación.")
     a = st.session_state.get("analisis")
     if a is None:
-        st.info("Sube una foto en la pestaña **Reconocer** y aquí verás, con tu foto, lo que hace el programa en cada paso.")
+        st.info("Sube una foto en la pestaña **Reconocer** y aquí verás, con tu foto, todo lo que hace el programa.")
     s = a["steps"] if a is not None else None
 
-    stepTitle("<b>Paso 1 · Buscar dónde está el perro</b> (saliency + Otsu + contornos)", True)
-    st.write("El mapa de *saliency* marca lo que más llama la atención (en rojo). Con el umbral de **Otsu** (práctica 4.3) y "
-             "`findContours` + `boundingRect` (práctica 4.1) se saca un rectángulo alrededor del perro. "
-             "El *saliency* de OpenCV no se vio en clase.")
+    stepTitle("<b>Localización del perro</b> (saliency + Otsu + contornos)")
+    st.write("El mapa de *saliency* marca lo que más llama la atención (en rojo). Con el umbral de **Otsu** y "
+             "`findContours` + `boundingRect` se obtiene un rectángulo alrededor del perro.")
     if s is not None:
         c = st.columns(4)
         c[0].image(toRGB(s["small"]), caption="foto reducida")
@@ -177,7 +176,7 @@ def showSpecs() -> None:
         c[2].image(toRGB(s["thresh"]), caption="umbral de Otsu")
         c[3].image(toRGB(s["rect"]), caption="rectángulo del perro")
 
-    stepTitle("<b>Paso 2 · Separar al perro del fondo</b> (GrabCut, práctica 4.2)")
+    stepTitle("<b>Segmentación del perro</b> (GrabCut)")
     st.write("*GrabCut* recibe el rectángulo y decide, píxel a píxel, qué es perro y qué es fondo. "
              "El fondo se pone negro y el perro se recorta y se deja en **256×256** sin deformarlo. "
              "Si el resultado sale raro, se repite con otro rectángulo.")
@@ -187,17 +186,17 @@ def showSpecs() -> None:
         c[1].image(toRGB(a["result"]), caption="recorte final 256×256")
         c[2].write("")
 
-    stepTitle("<b>Paso 3 · Describir al perro con números</b> (7.876 números por foto)")
+    stepTitle("<b>Descripción de la imagen</b> (7.876 números por foto)")
     st.write("Solo se mira dentro del perro (no el fondo negro). Cada descriptor mide una cosa distinta:")
     st.markdown("""
-| Descriptor | Qué mide | Números | ¿Visto en clase? |
-| --- | --- | --- | --- |
-| Color HSV | los colores del pelo | 152 | Sí (prácticas 1.3 y 7.4) |
-| HOG | la dirección de los bordes | 324 | Sí, en teoría (tema 6) |
-| LBP (2 tamaños) | la textura del pelo | 1.536 | Solo nombrado |
-| Bag of Words | puntos de interés SIFT agrupados con k-means | 1.000 | Sí (práctica 5.1, temas 5 y 7) |
-| Fisher vector | SIFT + PCA + mezcla de gaussianas | 4.096 | **No** (extra) |
-| Color local | color (Lab) de parches de 16×16 dentro del perro + mezcla de gaussianas | 768 | **No** (extra) |
+| Descriptor | Qué mide | Números |
+| --- | --- | --- |
+| Color HSV | los colores del pelo | 152 |
+| HOG | la dirección de los bordes | 324 |
+| LBP (2 tamaños) | la textura del pelo | 1.536 |
+| Bag of Words | puntos de interés SIFT agrupados con k-means | 1.000 |
+| Fisher vector | SIFT + PCA + mezcla de gaussianas | 4.096 |
+| Color local | color (Lab) de parches de 16×16 dentro del perro + mezcla de gaussianas | 768 |
 """)
     if s is not None:
         c = st.columns(3)
@@ -206,7 +205,7 @@ def showSpecs() -> None:
         c[2].caption("colores del perro (tono)")
         c[2].bar_chart(s["hue"])
 
-    stepTitle("<b>Paso 4 · Decidir la raza</b> (LDA, un clasificador lineal)", True)
+    stepTitle("<b>Clasificación de la raza</b> (LDA, un clasificador lineal)")
     st.write("El clasificador aprende, con 11.751 fotos, cómo es la foto \"media\" de cada una de las 120 razas y cómo se mueven las fotos alrededor de ella. "
              "Luego da una nota a cada raza según lo cerca que esté tu foto de esa media. Se muestran las 3 razas con más nota. "
              "Se entrenó con la división oficial de *Stanford Dogs* (100 fotos por raza) y también con las fotos en espejo.")
@@ -219,7 +218,7 @@ def showSpecs() -> None:
 - **Limpieza:** de 20.686 fotos se quitaron 452 donde el recorte falló mucho. Quedan **20.234**.
 - **Resultado en test** (8.483 fotos que el modelo no vio): la raza correcta sale la **primera en el 37%** y **entre las 3 primeras en el 55%** (al azar sería 0,8% y 2,5%).
 - **Con menos razas acierta más:** con 20 razas, 58% y 79%.
-- **Qué ayudó más:** cambiar a LDA (+6 puntos en el top 3), el Fisher vector (+6), las fotos en espejo (+4) y el color local (+4).
+- **Mejoras que más aportaron:** cambiar a LDA (+6 puntos en el top 3), el Fisher vector (+6), las fotos en espejo (+4) y el color local (+4).
 
 ### ⚠️ Límites
 - Solo conoce esas 120 razas. Con un mestizo o una raza que no sabe, enseña las que más se parecen.
