@@ -31,22 +31,27 @@ CSS = """
 .hero {position: relative; background: linear-gradient(135deg, #1f4d3a 0%, #3f8160 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; color: #ffffff; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
 .hero p {color: #e3f1e9; font-size: 1.02rem; margin: 0.6rem 0 0 0;}
-.tips {border: 1px solid #cfe3d6; border-left: 5px solid #3f8160; background: #f1f8f4; color: #22332a; border-radius: 8px; padding: 1rem 1.4rem; margin: 0.8rem 0 1rem 0;}
-.tips h3 {color: #1f4d3a; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.1rem;}
+.tips {border: 1px solid #cfe3d6; border-left: 5px solid #3f8160; background: #f1f8f4; color: #22332a; border-radius: 8px; padding: 1.1rem 1.5rem; margin: 0.8rem 0 1rem 0; font-size: 1.15rem; line-height: 1.55;}
+.tips h3 {color: #1f4d3a; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.3rem;}
 .tips ul {margin: 0.3rem 0 0.4rem 0; padding-left: 1.2rem;}
 .tips li {margin: 0.2rem 0; color: #22332a;}
 .result-head {margin: 1.6rem 0 1rem 0;}
-.result-head h2 {color: #1f4d3a; font-size: 1.9rem; font-weight: 700; line-height: 1.25; margin: 0; padding: 0;}
-.result-head p {color: #4b5d53; font-size: 1.05rem; margin: 0.4rem 0 0 0;}
+.result-head h2 {color: #1f4d3a; font-size: 2.2rem; font-weight: 700; line-height: 1.25; margin: 0; padding: 0;}
+.result-head p {color: #4b5d53; font-size: 1.25rem; margin: 0.4rem 0 0 0;}
 .card {display: flex; align-items: center; gap: 1.1rem; background: #ffffff; color: #1f2937; border-radius: 8px;
-       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #d5e5db;}
-.card .num {font-size: 2.2rem; line-height: 1; min-width: 2.6rem; text-align: center;}
-.card .name {font-size: 1.25rem; font-weight: 600; color: #1f2937;}
-.note {display: flex; gap: 0.8rem; align-items: flex-start; background: #f6f8f7; border: 1px solid #e0e7e3; border-radius: 8px; padding: 0.9rem 1.2rem; margin: 1.2rem 0 0.4rem 0; color: #4b5d53; font-size: 0.95rem; line-height: 1.5;}
-.note .ico {font-size: 1.3rem; line-height: 1.3;}
+       padding: 1.1rem 1.5rem; margin: 0.7rem 0; border: 1px solid #d5e5db;}
+.card .num {font-size: 2.6rem; line-height: 1; min-width: 3rem; text-align: center;}
+.card .name {font-size: 1.6rem; font-weight: 600; color: #1f2937;}
+.note {display: flex; gap: 0.8rem; align-items: flex-start; background: #f6f8f7; border: 1px solid #e0e7e3; border-radius: 8px; padding: 0.9rem 1.2rem; margin: 1.2rem 0 0.4rem 0; color: #4b5d53; font-size: 1.15rem; line-height: 1.55;}
+.note .ico {font-size: 1.6rem; line-height: 1.3;}
 .step {background: #f1f8f4; color: #22332a; border-left: 5px solid #3f8160; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
 .step b {color: #1f4d3a;}
-.small {color: #6b7280; font-size: 0.9rem;}
+.small {color: #6b7280; font-size: 1rem;}
+[data-testid="stFileUploader"] label p {font-size: 1.3rem !important; font-weight: 600;}
+[data-testid="stAlert"] p {font-size: 1.2rem !important;}
+[data-testid="stCaptionContainer"] {font-size: 1.05rem !important;}
+.stMarkdown p, .stMarkdown li {font-size: 1.12rem;}
+button[data-baseweb="tab"] p {font-size: 1.15rem !important;}
 </style>
 """
 
@@ -146,7 +151,7 @@ Si no la tienes así, también puedes probar 😉
         html += '<div class="card"><div class="num">🐕</div><div class="name">' + name + '</div></div>'
     st.markdown(html, unsafe_allow_html=True)
     if a["doubt"]:
-        st.warning("No he podido separar bien al perro del fondo, así que este resultado es poco fiable. Prueba con otra foto que cumpla las condiciones.")
+        st.warning("Este resultado es poco fiable.")
     st.markdown('<div class="note"><div class="ico">💡</div><div>Si tu perro es mestizo o de una raza que no está entre las 120 que '
                 'reconoce, verás las más parecidas. En la pestaña <b>Especificaciones</b> puedes ver cómo se ha analizado tu foto.</div></div>', unsafe_allow_html=True)
 
