@@ -230,16 +230,6 @@ def showSpecs() -> None:
     if a is not None:
         st.success("Para tu foto: " + " · ".join(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3]))
 
-    st.markdown("### 📊 Datos y resultados")
-    st.markdown("""
-- **Dataset:** *Stanford Dogs* (117 razas) y 3 de *Oxford-IIIT Pet* (shiba inu, havanese y american bulldog): **120 razas**, 20.234 fotos tras la limpieza.
-- **Test** (8.483 fotos que el modelo no vio): la raza correcta sale la primera en el **37 %** y entre las 3 primeras en el **55 %**.
-
-### ⚠️ Límites
-- Solo conoce esas 120 razas. Con un mestizo enseña las más parecidas.
-- Según la raza acierta muy distinto: american bulldog 81 %, american staffordshire terrier 11 %.
-""")
-
 
 def main() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
