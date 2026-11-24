@@ -24,30 +24,32 @@ import descriptores as D
 # pestana 2 (especificaciones): todo lo que hace el codigo con la foto, paso a paso
 # ------------------------------------------------------------
 
-st.set_page_config(page_title="Reconocedor de razas de perro", page_icon="🐶", layout="centered")
+st.set_page_config(page_title="Reconocedor de razas de perro", page_icon="🐕", layout="centered")
 
 CSS = """
 <style>
-.hero {background: linear-gradient(135deg, #5b50ff 0%, #ff6fb1 100%); border-radius: 22px; padding: 2.2rem 1.5rem;
-       text-align: center; color: white; margin-bottom: 1.2rem; box-shadow: 0 8px 24px rgba(91,80,255,0.25);}
-.hero h1 {color: white; font-size: 2.4rem; margin: 0; padding: 0;}
-.hero p {color: #fff; font-size: 1.1rem; margin: 0.4rem 0 0 0; opacity: 0.95;}
-.must {border: 3px solid #e53935; background: #fff4f4; color: #5c1010; border-radius: 18px; padding: 1.1rem 1.5rem; margin: 0.8rem 0;}
-.must h3 {color: #c62828; margin: 0 0 0.5rem 0; padding: 0; font-size: 1.25rem;}
-.must ul {margin: 0.3rem 0 0.6rem 0; padding-left: 1.3rem;}
-.must li {margin: 0.25rem 0; color: #5c1010;}
-.must .warn {font-weight: 700; color: #c62828;}
-.card {display: flex; align-items: center; gap: 1rem; background: #ffffff; color: #222; border-radius: 18px;
-       padding: 1rem 1.4rem; margin: 0.7rem 0; box-shadow: 0 4px 14px rgba(0,0,0,0.12); border: 1px solid #eee;}
-.card .medal {font-size: 2.6rem; line-height: 1;}
-.card .name {font-size: 1.6rem; font-weight: 800; color: #2d2a6e;}
-.card .tag {font-size: 0.9rem; color: #777;}
-.card.first {background: linear-gradient(135deg, #fff8e1 0%, #ffe9a8 100%); border: 2px solid #ffc107;}
-.card.first .name {font-size: 2rem;}
-.step {background: #f4f3ff; color: #2b2b44; border-left: 6px solid #5b50ff; border-radius: 12px; padding: 0.8rem 1.1rem; margin: 1rem 0 0.5rem 0;}
-.step b {color: #3b32c9;}
-.step .nuevo {background: #ff6fb1; color: white; border-radius: 8px; padding: 0 0.5rem; font-size: 0.8rem; margin-left: 0.4rem;}
-.small {color: #777; font-size: 0.9rem;}
+.hero {background: #1e3a5f; border-radius: 10px; padding: 2rem 2rem 1.7rem 2rem; color: #ffffff; margin-bottom: 1.4rem;}
+.hero .kicker {font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: #a9bcd6; margin: 0 0 0.5rem 0;}
+.hero h1 {color: #ffffff; font-size: 2.1rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.2;}
+.hero p {color: #d3deec; font-size: 1.02rem; margin: 0.5rem 0 0 0;}
+.must {border: 1px solid #e5b4b4; border-left: 6px solid #b42318; background: #fdf3f2; color: #3b1511; border-radius: 8px; padding: 1.1rem 1.5rem; margin: 0.8rem 0;}
+.must h3 {color: #b42318; margin: 0 0 0.5rem 0; padding: 0; font-size: 1.05rem; letter-spacing: 0.04em; text-transform: uppercase;}
+.must ul {margin: 0.3rem 0 0.6rem 0; padding-left: 1.2rem;}
+.must li {margin: 0.25rem 0; color: #3b1511;}
+.must .warn {font-weight: 700; color: #b42318;}
+.card {display: flex; align-items: center; gap: 1.1rem; background: #ffffff; color: #1f2937; border-radius: 8px;
+       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #d9dee5;}
+.card .num {display: flex; align-items: center; justify-content: center; min-width: 2.4rem; height: 2.4rem; border-radius: 50%;
+            background: #e8edf4; color: #1e3a5f; font-weight: 700; font-size: 1.1rem;}
+.card .name {font-size: 1.25rem; font-weight: 600; color: #1f2937;}
+.card .tag {font-size: 0.85rem; color: #6b7280;}
+.card.first {border: 2px solid #1e3a5f; padding: 1.2rem 1.4rem;}
+.card.first .num {background: #1e3a5f; color: #ffffff;}
+.card.first .name {font-size: 1.7rem; font-weight: 700; color: #1e3a5f;}
+.step {background: #f3f5f8; color: #1f2937; border-left: 5px solid #1e3a5f; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
+.step b {color: #1e3a5f;}
+.step .nuevo {border: 1px solid #b45309; color: #b45309; border-radius: 4px; padding: 0 0.45rem; font-size: 0.72rem; margin-left: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;}
+.small {color: #6b7280; font-size: 0.9rem;}
 </style>
 """
 
@@ -111,7 +113,7 @@ def getSteps(img:np.ndarray, result:np.ndarray, result_mask:np.ndarray) -> dict:
 def showRecognize() -> None:
     st.markdown("""
 <div class="must">
-<h3>⚠️ CONDICIONES OBLIGATORIAS DE LA FOTO</h3>
+<h3>Condiciones obligatorias de la foto</h3>
 Para que el reconocedor funcione bien, la foto <b>tiene que cumplir todo esto</b>:
 <ul>
 <li>Sale <b>un solo perro</b>.</li>
@@ -123,11 +125,11 @@ Para que el reconocedor funcione bien, la foto <b>tiene que cumplir todo esto</b
 <span class="warn">Si no se cumple, el resultado puede ser muy malo.</span>
 </div>
 """, unsafe_allow_html=True)
-    ok = st.checkbox("✅ He comprobado que mi foto cumple todas las condiciones")
+    ok = st.checkbox("He comprobado que mi foto cumple todas las condiciones")
     if not ok:
         st.info("Marca la casilla para poder subir la foto.")
         return
-    file = st.file_uploader("📷 Sube la foto del perro", type=["jpg", "jpeg", "png", "webp"])
+    file = st.file_uploader("Sube la foto del perro", type=["jpg", "jpeg", "png", "webp"])
     if file is None:
         return
     key = (file.name, file.size)
@@ -136,7 +138,7 @@ Para que el reconocedor funcione bien, la foto <b>tiene que cumplir todo esto</b
         if img is None:
             st.error("No he podido leer esa foto. Prueba con otra (jpg o png).")
             return
-        with st.spinner("Mirando al perro... 🔍"):
+        with st.spinner("Analizando la foto..."):
             proba, result, doubt = R.predictBreed(img, getModel())
             ret, result_mask, doubt2, box = P.processImage(img)
             steps = getSteps(img, result, result_mask)
@@ -144,17 +146,16 @@ Para que el reconocedor funcione bien, la foto <b>tiene que cumplir todo esto</b
         st.session_state["analisis"] = {"img": img, "proba": proba, "result": result, "doubt": doubt, "steps": steps}
     a = st.session_state["analisis"]
     st.image(toRGB(a["img"]), caption="Tu foto", width=380)
-    st.markdown("## 🏆 Las 3 razas que más se parecen")
-    medals = ["🥇", "🥈", "🥉"]
+    st.markdown("### Las 3 razas que más se parecen")
     tags = ["la que más se parece", "segunda opción", "tercera opción"]
     html = ""
     for n, i in enumerate(np.argsort(-a["proba"])[:3]):
         name = R.prettyName(getModel()["breeds"][i]).title()
         css = "card first" if n == 0 else "card"
-        html += '<div class="' + css + '"><div class="medal">' + medals[n] + '</div><div><div class="name">' + name + '</div><div class="tag">' + tags[n] + '</div></div></div>'
+        html += '<div class="' + css + '"><div class="num">' + str(n + 1) + '</div><div><div class="name">' + name + '</div><div class="tag">' + tags[n] + '</div></div></div>'
     st.markdown(html, unsafe_allow_html=True)
     if a["doubt"]:
-        st.warning("⚠️ No he podido separar bien al perro del fondo, así que este resultado es poco fiable. Prueba con otra foto que cumpla las condiciones.")
+        st.warning("No he podido separar bien al perro del fondo, así que este resultado es poco fiable. Prueba con otra foto que cumpla las condiciones.")
     st.markdown('<p class="small">Solo conozco 120 razas. Si tu perro es mestizo o de otra raza, te enseño las que más se parecen. '
                 'Mira la pestaña <b>Especificaciones</b> para ver paso a paso qué ha hecho el programa con tu foto.</p>', unsafe_allow_html=True)
 
@@ -167,7 +168,7 @@ def stepTitle(text:str, new:bool=False) -> None:
 
 # pestana 2: lo que hace el codigo con la foto, paso a paso
 def showSpecs() -> None:
-    st.markdown("## 🔬 Así funciona")
+    st.markdown("### Cómo funciona")
     st.write("Todo está hecho con técnicas clásicas de visión por computador, **sin deep learning**. "
              "Estos son los pasos que sigue el programa con cada foto.")
     a = st.session_state.get("analisis")
@@ -221,7 +222,7 @@ def showSpecs() -> None:
     if a is not None:
         st.success("Para tu foto: " + " · ".join(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3]))
 
-    st.markdown("## 📊 Datos y resultados")
+    st.markdown("### Datos y resultados")
     st.markdown("""
 - **Dataset:** *Stanford Dogs* (117 razas) y 3 razas de *Oxford-IIIT Pet* (shiba inu, havanese y american bulldog): **120 razas**.
 - **Limpieza:** de 20.686 fotos se quitaron 452 donde el recorte falló mucho. Quedan **20.234**.
@@ -229,7 +230,7 @@ def showSpecs() -> None:
 - **Con menos razas acierta más:** con 20 razas, 54% y 74%.
 - **Qué ayudó más:** el Fisher vector (+5 puntos) y las fotos en espejo (+4 puntos en el top 3).
 
-## ⚠️ Límites
+### Límites
 - Solo conoce esas 120 razas. Con un mestizo o una raza que no sabe, enseña las que más se parecen.
 - Funciona mejor con un solo perro, de frente y con la cara visible.
 - En algunas razas acierta mucho (shiba inu 93%) y en otras muy poco (poodle estándar 2%).
@@ -238,8 +239,8 @@ def showSpecs() -> None:
 
 def main() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
-    st.markdown('<div class="hero"><h1>🐶 ¿De qué raza es tu perro?</h1><p>Sube una foto y te digo a qué razas se parece</p></div>', unsafe_allow_html=True)
-    tab1, tab2 = st.tabs(["🐕 Reconocer", "🔬 Especificaciones"])
+    st.markdown('<div class="hero"><div class="kicker">Fundamentos de la Visión por Computador · Universidad de Deusto</div><h1>Reconocedor de razas de perro</h1><p>Visión por computador clásica, sin deep learning. Sube una foto y obtén las 3 razas más parecidas.</p></div>', unsafe_allow_html=True)
+    tab1, tab2 = st.tabs(["Reconocer", "Especificaciones"])
     with tab1:
         showRecognize()
     with tab2:
