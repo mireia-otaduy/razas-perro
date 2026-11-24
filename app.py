@@ -47,11 +47,14 @@ CSS = """
 .step {background: #f1f8f4; color: #22332a; border-left: 5px solid #3f8160; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
 .step b {color: #1f4d3a;}
 .small {color: #6b7280; font-size: 1rem;}
-[data-testid="stFileUploader"] label p {font-size: 1.3rem !important; font-weight: 600;}
+.upload-title {color: #1f4d3a; font-size: 1.6rem; font-weight: 700; margin: 1.2rem 0 0.4rem 0;}
+[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 1.1rem !important;}
+[data-testid="stFileUploader"] small {font-size: 1rem !important;}
 [data-testid="stAlert"] p {font-size: 1.2rem !important;}
 [data-testid="stCaptionContainer"] {font-size: 1.05rem !important;}
 .stMarkdown p, .stMarkdown li {font-size: 1.12rem;}
-button[data-baseweb="tab"] p {font-size: 1.15rem !important;}
+[data-baseweb="tab-list"] button {padding: 0.9rem 1.6rem !important; height: auto !important;}
+[data-baseweb="tab-list"] button p, [data-baseweb="tab-list"] button div {font-size: 1.45rem !important; font-weight: 600 !important;}
 </style>
 """
 
@@ -125,7 +128,8 @@ Si puedes elegir, una foto así suele funcionar genial:
 Si no la tienes así, también puedes probar 😉
 </div>
 """, unsafe_allow_html=True)
-    file = st.file_uploader("📷 Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"])
+    st.markdown('<div class="upload-title">📷 Sube la foto de tu perro</div>', unsafe_allow_html=True)
+    file = st.file_uploader("Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
     if file is None:
         return
     key = (file.name, file.size)
@@ -164,16 +168,14 @@ def stepTitle(text:str) -> None:
 # pestana 2: lo que hace el codigo con la foto
 def showSpecs() -> None:
     st.markdown("### 🐾 Cómo funciona")
-    st.write("Todo está hecho con técnicas clásicas de visión por computador, **sin deep learning**. "
-             "Aquí se ve el procesamiento completo de tu foto: localización, segmentación, descripción y clasificación.")
+    st.write("Técnicas clásicas de visión por computador, **sin deep learning**.")
     a = st.session_state.get("analisis")
     if a is None:
         st.info("Sube una foto en la pestaña **Reconocer** y aquí verás, con tu foto, todo lo que hace el programa.")
     s = a["steps"] if a is not None else None
 
     stepTitle("<b>Localización del perro</b> (saliency + Otsu + contornos)")
-    st.write("El mapa de *saliency* marca lo que más llama la atención (en rojo). Con el umbral de **Otsu** y "
-             "`findContours` + `boundingRect` se obtiene un rectángulo alrededor del perro.")
+    st.write("*Saliency* marca lo que más llama la atención y con **Otsu** y contornos se saca un rectángulo alrededor del perro.")
     if s is not None:
         c = st.columns(4)
         c[0].image(toRGB(s["small"]), caption="foto reducida")
@@ -182,9 +184,7 @@ def showSpecs() -> None:
         c[3].image(toRGB(s["rect"]), caption="rectángulo del perro")
 
     stepTitle("<b>Segmentación del perro</b> (GrabCut)")
-    st.write("*GrabCut* recibe el rectángulo y decide, píxel a píxel, qué es perro y qué es fondo. "
-             "El fondo se pone negro y el perro se recorta y se deja en **256×256** sin deformarlo. "
-             "Si el resultado sale raro, se repite con otro rectángulo.")
+    st.write("*GrabCut* separa el perro del fondo. El fondo se pone negro y el recorte queda en **256×256**.")
     if s is not None:
         c = st.columns(3)
         c[0].image(toRGB(s["grabcut"]), caption="perro separado del fondo")
@@ -192,7 +192,7 @@ def showSpecs() -> None:
         c[2].write("")
 
     stepTitle("<b>Descripción de la imagen</b> (7.876 números por foto)")
-    st.write("Solo se mira dentro del perro (no el fondo negro). Cada descriptor mide una cosa distinta:")
+    st.write("Solo se mira dentro del perro. Cada descriptor mide algo distinto:")
     st.markdown("""
 | Descriptor | Qué mide | Números |
 | --- | --- | --- |
@@ -211,24 +211,18 @@ def showSpecs() -> None:
         c[2].bar_chart(s["hue"])
 
     stepTitle("<b>Clasificación de la raza</b> (LDA, un clasificador lineal)")
-    st.write("El clasificador aprende, con 11.751 fotos, cómo es la foto \"media\" de cada una de las 120 razas y cómo se mueven las fotos alrededor de ella. "
-             "Luego da una nota a cada raza según lo cerca que esté tu foto de esa media. Se muestran las 3 razas con más nota. "
-             "Se entrenó con la división oficial de *Stanford Dogs* (100 fotos por raza) y también con las fotos en espejo.")
+    st.write("El clasificador da una nota a cada una de las 120 razas y se muestran las 3 con más nota.")
     if a is not None:
         st.success("Para tu foto: " + " · ".join(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3]))
 
     st.markdown("### 📊 Datos y resultados")
     st.markdown("""
-- **Dataset:** *Stanford Dogs* (117 razas) y 3 razas de *Oxford-IIIT Pet* (shiba inu, havanese y american bulldog): **120 razas**.
-- **Limpieza:** de 20.686 fotos se quitaron 452 donde el recorte falló mucho. Quedan **20.234**.
-- **Resultado en test** (8.483 fotos que el modelo no vio): la raza correcta sale la **primera en el 37%** y **entre las 3 primeras en el 55%** (al azar sería 0,8% y 2,5%).
-- **Con menos razas acierta más:** con 20 razas, 58% y 79%.
-- **Mejoras que más aportaron:** cambiar a LDA (+6 puntos en el top 3), el Fisher vector (+6), las fotos en espejo (+4) y el color local (+4).
+- **Dataset:** *Stanford Dogs* (117 razas) y 3 de *Oxford-IIIT Pet* (shiba inu, havanese y american bulldog): **120 razas**, 20.234 fotos tras la limpieza.
+- **Test** (8.483 fotos que el modelo no vio): la raza correcta sale la primera en el **37 %** y entre las 3 primeras en el **55 %**.
 
 ### ⚠️ Límites
-- Solo conoce esas 120 razas. Con un mestizo o una raza que no sabe, enseña las que más se parecen.
-- Funciona mejor con un solo perro, de frente y con la cara visible.
-- En algunas razas acierta mucho (american bulldog 81%) y en otras muy poco (american staffordshire terrier 11%).
+- Solo conoce esas 120 razas. Con un mestizo enseña las más parecidas.
+- Según la raza acierta muy distinto: american bulldog 81 %, american staffordshire terrier 11 %.
 """)
 
 
