@@ -28,23 +28,22 @@ st.set_page_config(page_title="Reconocedor de razas de perro", page_icon="🐕",
 
 CSS = """
 <style>
-.hero {position: relative; background: linear-gradient(135deg, #1e3a5f 0%, #2f6db5 100%); border-radius: 12px; padding: 2.6rem 2rem 1.8rem 2rem; color: #ffffff; margin-bottom: 1.4rem; text-align: center;}
-.hero .corner {position: absolute; top: 0.7rem; right: 1rem; font-size: 0.72rem; color: #c3d3e8;}
+.hero {position: relative; background: linear-gradient(135deg, #5b3a29 0%, #b9652f 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; color: #ffffff; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
-.hero p {color: #dbe6f3; font-size: 1.02rem; margin: 0.6rem 0 0 0;}
-.tips {border: 1px solid #cfe0f3; border-left: 5px solid #2f6db5; background: #eef4fb; color: #1f2d3d; border-radius: 8px; padding: 1rem 1.4rem; margin: 0.8rem 0 1rem 0;}
-.tips h3 {color: #1e3a5f; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.1rem;}
+.hero p {color: #f6e8da; font-size: 1.02rem; margin: 0.6rem 0 0 0;}
+.tips {border: 1px solid #ecd9c3; border-left: 5px solid #c0793f; background: #fbf3e8; color: #3a2a20; border-radius: 8px; padding: 1rem 1.4rem; margin: 0.8rem 0 1rem 0;}
+.tips h3 {color: #5b3a29; margin: 0 0 0.4rem 0; padding: 0; font-size: 1.1rem;}
 .tips ul {margin: 0.3rem 0 0.4rem 0; padding-left: 1.2rem;}
-.tips li {margin: 0.2rem 0; color: #1f2d3d;}
+.tips li {margin: 0.2rem 0; color: #3a2a20;}
 .card {display: flex; align-items: center; gap: 1.1rem; background: #ffffff; color: #1f2937; border-radius: 8px;
-       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #d9dee5;}
+       padding: 0.9rem 1.3rem; margin: 0.6rem 0; border: 1px solid #e6dccf;}
 .card .num {font-size: 2.2rem; line-height: 1; min-width: 2.6rem; text-align: center;}
 .card .name {font-size: 1.25rem; font-weight: 600; color: #1f2937;}
 .card .tag {font-size: 0.85rem; color: #6b7280;}
-.card.first {border: 2px solid #e0a800; background: #fff8e6; padding: 1.2rem 1.4rem;}
-.card.first .name {font-size: 1.7rem; font-weight: 700; color: #1e3a5f;}
-.step {background: #f3f5f8; color: #1f2937; border-left: 5px solid #1e3a5f; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
-.step b {color: #1e3a5f;}
+.card.first {border: 2px solid #c0793f; background: #fdf0df; padding: 1.2rem 1.4rem;}
+.card.first .name {font-size: 1.7rem; font-weight: 700; color: #5b3a29;}
+.step {background: #f7f1ea; color: #2f241c; border-left: 5px solid #b9652f; border-radius: 4px; padding: 0.7rem 1.1rem; margin: 1.4rem 0 0.6rem 0;}
+.step b {color: #8a4a1f;}
 .step .nuevo {border: 1px solid #b45309; color: #b45309; border-radius: 4px; padding: 0 0.45rem; font-size: 0.72rem; margin-left: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;}
 .small {color: #6b7280; font-size: 0.9rem;}
 </style>
@@ -110,15 +109,14 @@ def getSteps(img:np.ndarray, result:np.ndarray, result_mask:np.ndarray) -> dict:
 def showRecognize() -> None:
     st.markdown("""
 <div class="tips">
-<h3>🐾 Para que acierte mejor</h3>
-Funciona mejor si la foto es así:
+<h3>📸 La foto ideal</h3>
+Si puedes elegir, una foto así suele funcionar genial:
 <ul>
-<li>Sale <b>un solo perro</b>.</li>
-<li>Está <b>de frente</b> y se ve bien la cara.</li>
-<li>Se ve el cuerpo entero (o casi) y ocupa buena parte de la foto.</li>
-<li>Sin personas ni otros animales alrededor.</li>
-<li>Foto nítida y con buena luz.</li>
+<li>Un solo perro, de frente y con la cara bien a la vista.</li>
+<li>Con el cuerpo entero (o casi) y sin personas alrededor.</li>
+<li>Nítida y con buena luz.</li>
 </ul>
+Si no la tienes así, también puedes probar 😉
 </div>
 """, unsafe_allow_html=True)
     file = st.file_uploader("📷 Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"])
@@ -232,7 +230,7 @@ def showSpecs() -> None:
 
 def main() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
-    st.markdown('<div class="hero"><div class="corner">Fundamentos de la Visión por Computador · Universidad de Deusto</div><h1>🐶 Reconocedor de razas de perro 🐾</h1><p>Sube una foto de tu perro 🦴 y descubre a qué razas se parece</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero"><h1>🐶 Reconocedor de razas de perro 🐾</h1><p>Sube una foto de tu perro 🦴 y descubre a qué razas se parece</p></div>', unsafe_allow_html=True)
     tab1, tab2 = st.tabs(["🐕 Reconocer", "🔬 Especificaciones"])
     with tab1:
         showRecognize()
