@@ -70,6 +70,7 @@ CSS = """
 .stTabs button, .stTabs button *, [data-baseweb="tab-list"] button, [data-baseweb="tab-list"] button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
 .stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 .stApp h3 {font-size: 1.7rem !important;}
+[data-testid="stHeaderActionElements"], .stApp h1 a, .stApp h2 a, .stApp h3 a {display: none !important;}
 </style>
 """
 
