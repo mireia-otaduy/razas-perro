@@ -136,14 +136,13 @@ Si no la tienes así, también puedes probar 😉
         st.session_state["analisis"] = {"img": img, "proba": proba, "result": result, "doubt": doubt, "steps": steps}
     a = st.session_state["analisis"]
     st.image(toRGB(a["img"]), caption="Tu foto", width=380)
-    st.markdown("### 🏆 Las 3 razas que más se parecen")
-    medals = ["🥇", "🥈", "🥉"]
-    tags = ["la que más se parece", "segunda opción", "tercera opción"]
+    st.markdown("### 🐾 Podría ser alguna de estas razas")
+    st.caption("Estas son las 3 razas a las que más se parece tu perro (sin ningún orden).")
+    # las ponemos por orden alfabetico para que no parezca que hay una primera y una ultima
+    names = sorted(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3])
     html = ""
-    for n, i in enumerate(np.argsort(-a["proba"])[:3]):
-        name = R.prettyName(getModel()["breeds"][i]).title()
-        css = "card first" if n == 0 else "card"
-        html += '<div class="' + css + '"><div class="num">' + medals[n] + '</div><div><div class="name">' + name + '</div><div class="tag">' + tags[n] + '</div></div></div>'
+    for name in names:
+        html += '<div class="card"><div class="num">🐕</div><div class="name">' + name + '</div></div>'
     st.markdown(html, unsafe_allow_html=True)
     if a["doubt"]:
         st.warning("No he podido separar bien al perro del fondo, así que este resultado es poco fiable. Prueba con otra foto que cumpla las condiciones.")
