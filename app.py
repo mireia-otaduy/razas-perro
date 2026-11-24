@@ -187,7 +187,7 @@ def showSpecs() -> None:
         c[1].image(toRGB(a["result"]), caption="recorte final 256×256")
         c[2].write("")
 
-    stepTitle("<b>Paso 3 · Describir al perro con números</b> (7.108 números por foto)")
+    stepTitle("<b>Paso 3 · Describir al perro con números</b> (7.876 números por foto)")
     st.write("Solo se mira dentro del perro (no el fondo negro). Cada descriptor mide una cosa distinta:")
     st.markdown("""
 | Descriptor | Qué mide | Números | ¿Visto en clase? |
@@ -197,6 +197,7 @@ def showSpecs() -> None:
 | LBP (2 tamaños) | la textura del pelo | 1.536 | Solo nombrado |
 | Bag of Words | puntos de interés SIFT agrupados con k-means | 1.000 | Sí (práctica 5.1, temas 5 y 7) |
 | Fisher vector | SIFT + PCA + mezcla de gaussianas | 4.096 | **No** (extra) |
+| Color local | color (Lab) de parches de 16×16 dentro del perro + mezcla de gaussianas | 768 | **No** (extra) |
 """)
     if s is not None:
         c = st.columns(3)
@@ -205,10 +206,10 @@ def showSpecs() -> None:
         c[2].caption("colores del perro (tono)")
         c[2].bar_chart(s["hue"])
 
-    stepTitle("<b>Paso 4 · Decidir la raza</b> (regresión ridge)", True)
-    st.write("Un clasificador aprendido con 11.751 fotos da una nota a cada una de las 120 razas. "
-             "Se muestran las 3 razas con más nota. Se entrenó con la división oficial de *Stanford Dogs* (100 fotos por raza) "
-             "y también con las fotos en espejo.")
+    stepTitle("<b>Paso 4 · Decidir la raza</b> (LDA, un clasificador lineal)", True)
+    st.write("El clasificador aprende, con 11.751 fotos, cómo es la foto \"media\" de cada una de las 120 razas y cómo se mueven las fotos alrededor de ella. "
+             "Luego da una nota a cada raza según lo cerca que esté tu foto de esa media. Se muestran las 3 razas con más nota. "
+             "Se entrenó con la división oficial de *Stanford Dogs* (100 fotos por raza) y también con las fotos en espejo.")
     if a is not None:
         st.success("Para tu foto: " + " · ".join(R.prettyName(getModel()["breeds"][i]).title() for i in np.argsort(-a["proba"])[:3]))
 
@@ -216,14 +217,14 @@ def showSpecs() -> None:
     st.markdown("""
 - **Dataset:** *Stanford Dogs* (117 razas) y 3 razas de *Oxford-IIIT Pet* (shiba inu, havanese y american bulldog): **120 razas**.
 - **Limpieza:** de 20.686 fotos se quitaron 452 donde el recorte falló mucho. Quedan **20.234**.
-- **Resultado en test** (8.483 fotos que el modelo no vio): la raza correcta sale la **primera en el 31%** y **entre las 3 primeras en el 49%** (al azar sería 0,8% y 2,5%).
-- **Con menos razas acierta más:** con 20 razas, 54% y 74%.
-- **Qué ayudó más:** el Fisher vector (+5 puntos) y las fotos en espejo (+4 puntos en el top 3).
+- **Resultado en test** (8.483 fotos que el modelo no vio): la raza correcta sale la **primera en el 37%** y **entre las 3 primeras en el 55%** (al azar sería 0,8% y 2,5%).
+- **Con menos razas acierta más:** con 20 razas, 58% y 79%.
+- **Qué ayudó más:** cambiar a LDA (+6 puntos en el top 3), el Fisher vector (+6), las fotos en espejo (+4) y el color local (+4).
 
 ### ⚠️ Límites
 - Solo conoce esas 120 razas. Con un mestizo o una raza que no sabe, enseña las que más se parecen.
 - Funciona mejor con un solo perro, de frente y con la cara visible.
-- En algunas razas acierta mucho (shiba inu 93%) y en otras muy poco (poodle estándar 2%).
+- En algunas razas acierta mucho (american bulldog 81%) y en otras muy poco (american staffordshire terrier 11%).
 """)
 
 

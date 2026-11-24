@@ -12,8 +12,8 @@ import clasificar as CL
 #
 # pasos (los mismos que se hicieron con el dataset):
 #   1. recortar al perro: saliency + grabcut, fondo negro, 256x256   (preparar_dataset.py)
-#   2. sacar los descriptores: color, hog, lbp, bow y fisher         (descriptores.py)
-#   3. el clasificador da una nota por raza y la pasamos a %         (clasificar.py)
+#   2. sacar los descriptores: color, hog, lbp, bow, fisher y color local (descriptores.py)
+#   3. el clasificador (lda) da una nota por raza                    (clasificar.py)
 #   4. respuesta: las 3 razas que mas se parecen, de mas a menos
 #
 # uso:  python reconocer_raza.py C:/ruta/foto_de_mi_perro.jpg
@@ -22,8 +22,8 @@ import clasificar as CL
 # de frente, con la cara bien visible y sin mucha gente ni objetos alrededor
 #
 # ojo: solo conoce las 120 razas del dataset. con otra raza (o un mestizo) dira las 3 que mas se parezcan
-# con 120 razas el acierto es bajo (en test: la raza buena sale la primera en 31% de las fotos
-# y entre las 3 primeras en 49%), asi que hay que mirar siempre las 3 opciones
+# con 120 razas el acierto es bajo (en test: la raza buena sale la primera en 37% de las fotos
+# y entre las 3 primeras en 55%), asi que hay que mirar siempre las 3 opciones
 # ------------------------------------------------------------
 
 foto = "datos/dataset_stanford/images/n02099601-golden_retriever/n02099601_100.jpg"   # foto por defecto
@@ -56,7 +56,7 @@ def predictBreed(img:cv.Mat, model:dict) -> tuple:
         data[key] = np.array([d[key]], np.float32)
     # paso 3: nota de cada raza y paso a probabilidad
     X = CL.buildMatrix(data, np.array([0]), model["keys"], model["scaler"])
-    S = CL.scoreRidge(X, model["W"], model["mu"])
+    S = CL.scoreLDA(X, model["W"], model["bias"], model["mu"])
     proba = CL.getProba(S, model["t"])[0]
     return proba, result, doubt
 

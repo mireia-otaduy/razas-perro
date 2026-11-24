@@ -9,6 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 from sklearn.svm import SVC
+from scipy.linalg import cho_factor, cho_solve
 
 # ------------------------------------------------------------
 # clasificar (version 2): aprender a decir la raza a partir de los descriptores
@@ -21,13 +22,13 @@ from sklearn.svm import SVC
 # como cada paso tarda, se guarda todo en disco y se puede parar y seguir:
 #   python clasificar.py cargar       -> junta los descriptores de las fotos en matrices
 #   python clasificar.py descriptores -> que descriptores funcionan mejor (validacion)
-#   python clasificar.py comparar     -> ridge contra svm y knn (validacion)
+#   python clasificar.py comparar     -> lda y ridge contra svm y knn (validacion)
 #   python clasificar.py final        -> resultado en test, umbral de confianza y modelo guardado
 #   python clasificar.py razas        -> como baja el acierto al subir el numero de razas
 #
-# clasificador final: regresion lineal con regularizacion (ridge) sobre todos los descriptores
-#   (NO visto en clase, es un clasificador lineal muy simple: aprende una nota por raza)
-# lo comparamos con los de clase: knn (practica 6.1) y svm con kernel rbf (practica 6.2)
+# clasificador final: lda con shrinkage sobre todos los descriptores
+#   (NO visto en clase: un clasificador lineal que aprende la foto "media" de cada raza y como se mueven las fotos alrededor)
+# lo comparamos con ridge (regresion lineal) y con los de clase: knn (practica 6.1) y svm con kernel rbf (practica 6.2)
 # ------------------------------------------------------------
 
 carpeta = "datos/perros_256"
@@ -37,7 +38,7 @@ matrices = "datos/matrices"        # descriptores juntos en matrices
 resultados = "resultados"          # tablas y graficas
 modelo = "modelo"
 lista = "datos/lista_fotos.csv"
-CLAVES = ["color", "hog", "lbp", "lbp2", "bow", "fisher"]    # todos los descriptores
+CLAVES = ["color", "hog", "lbp", "lbp2", "bow", "fisher", "lcolor"]    # todos los descriptores
 RAIZ = ["color", "lbp", "lbp2", "bow"]                      # histogramas: se les hace la raiz cuadrada
 
 
@@ -107,12 +108,21 @@ def stepLoad(t_end:float) -> None:
             continue
         np.save(matrices + "/" + key + "_tmp.npy", np.vstack([p[key] for p in parts]))
         os.replace(matrices + "/" + key + "_tmp.npy", matrices + "/" + key + ".npy")
+    # descriptores que se anadieron despues (no estan en los trozos): se leen directamente de los .npz
+    for key in CLAVES:
+        if not os.path.exists(matrices + "/" + key + ".npy"):
+            with ThreadPoolExecutor(16) as ex:
+                rows = list(ex.map(lambda n: readNpz(n)[key], names))
+            np.save(matrices + "/" + key + "_tmp.npy", np.array(rows, np.float32))
+            os.replace(matrices + "/" + key + "_tmp.npy", matrices + "/" + key + ".npy")
+            print("descriptor", key, "anadido", flush=True)
     np.save(matrices + "/y.npy", y)
     np.save(matrices + "/split.npy", split)
     print("matrices listas:", len(names), "fotos", flush=True)
 
 
 LAMBDA = 8.0                  # fuerza de la regularizacion del ridge (elegida con validacion)
+ALFA = 0.7                    # cuanto se mezcla la covarianza con su diagonal en el lda (elegido con validacion)
 RESULTADOS = resultados
 
 
@@ -190,13 +200,40 @@ def trainRidge(X:np.ndarray, y:np.ndarray, n_breeds:int, lam:float=LAMBDA) -> tu
     T -= T.mean(axis=0)
     A = Xc.T @ Xc
     A[np.diag_indices_from(A)] += lam * len(X) / X.shape[1]
-    W = np.linalg.solve(A.astype(np.float64), (Xc.T @ T).astype(np.float64))
+    W = cho_solve(cho_factor(A, overwrite_a=True, check_finite=False), Xc.T @ T, check_finite=False)
     return W.astype(np.float32), mu
 
 
 # nota de cada raza para cada foto
 def scoreRidge(X:np.ndarray, W:np.ndarray, mu:np.ndarray) -> np.ndarray:
     return (X - mu) @ W
+
+
+# lda con shrinkage (NO visto en clase)
+#   1. la foto "media" de cada raza (en el espacio de los descriptores)
+#   2. la covarianza: cuanto se mueven las fotos de una misma raza alrededor de su media, y que descriptores se mueven juntos
+#   3. la nota de una foto para una raza = lo cerca que esta de la media de esa raza, midiendo con esa covarianza
+# con tantos numeros por foto la covarianza sale muy mala, asi que la mezclamos con su diagonal (shrinkage):
+#   covarianza_final = (1 - alfa) * covarianza + alfa * su diagonal
+def trainLDA(X:np.ndarray, y:np.ndarray, n_breeds:int, alpha:float=ALFA) -> tuple:
+    mu = X.mean(axis=0)
+    Xc = X - mu
+    means = np.array([Xc[y == b].mean(axis=0) for b in range(n_breeds)])
+    for b in range(n_breeds):
+        Xc[y == b] -= means[b]                  # a cada foto le restamos la media de su raza
+    S = Xc.T @ Xc / len(X)
+    del Xc
+    diag = np.diag(S).copy()
+    S *= 1 - alpha
+    S[np.diag_indices_from(S)] += alpha * diag + 1e-3 * diag.mean()
+    W = cho_solve(cho_factor(S, overwrite_a=True, check_finite=False), means.T, check_finite=False)
+    bias = -0.5 * (means * W.T).sum(axis=1)
+    return W.astype(np.float32), bias.astype(np.float32), mu
+
+
+# nota de cada raza para cada foto
+def scoreLDA(X:np.ndarray, W:np.ndarray, bias:np.ndarray, mu:np.ndarray) -> np.ndarray:
+    return (X - mu) @ W + bias
 
 
 # kernel rbf calculado de golpe con numpy (el mismo kernel de la practica 6.2, pero mucho mas rapido)
@@ -247,7 +284,7 @@ def saveRow(file:str, row:list) -> None:
 
 # ---------- pasos ----------
 
-# paso descriptores: que descriptor funciona mejor (ridge, entrenando con fit y midiendo en val)
+# paso descriptores: que descriptor funciona mejor (lda, entrenando con fit y midiendo en val)
 def stepDescriptors(data:dict, y:np.ndarray, fit:np.ndarray, val:np.ndarray, t_end:float) -> None:
     combos = [[k] for k in CLAVES] + [CLAVES] + [[k for k in CLAVES if k != q] for q in CLAVES]
     done = set()
@@ -262,14 +299,14 @@ def stepDescriptors(data:dict, y:np.ndarray, fit:np.ndarray, val:np.ndarray, t_e
             return
         scaler = fitScaler(data, fit, keys)
         X, y_train = getTrainSet(data, y, fit, keys, scaler)
-        W, mu = trainRidge(X, y_train, 120)
-        S = scoreRidge(buildMatrix(data, val, keys, scaler), W, mu)
+        W, bias, mu = trainLDA(X, y_train, 120)
+        S = scoreLDA(buildMatrix(data, val, keys, scaler), W, bias, mu)
         top1, top3 = getAccuracy(S, y[val])
         saveRow("descriptores.csv", [name, "%.4f" % top1, "%.4f" % top3])
         print(name, "top1 %.3f top3 %.3f" % (top1, top3), flush=True)
 
 
-# paso comparar: ridge contra los clasificadores de clase (knn y svm), todos con los mismos descriptores
+# paso comparar: lda y ridge contra los clasificadores de clase (knn y svm), todos con los mismos descriptores
 def stepCompare(data:dict, y:np.ndarray, fit:np.ndarray, val:np.ndarray, t_end:float) -> None:
     scaler = fitScaler(data, fit, CLAVES)
     X_fit, y_fit = getTrainSet(data, y, fit, CLAVES, scaler, False)      # sin espejos
@@ -283,8 +320,14 @@ def stepCompare(data:dict, y:np.ndarray, fit:np.ndarray, val:np.ndarray, t_end:f
     def ridge(X, y_tr):
         W, mu = trainRidge(X, y_tr, 120)
         return scoreRidge(X_val, W, mu)
+    def lda(X, y_tr, alpha=ALFA):
+        W, bias, mu = trainLDA(X, y_tr, 120, alpha)
+        return scoreLDA(X_val, W, bias, mu)
     runs.append(("ridge (sin espejos)", lambda: ridge(X_fit, y_fit)))
     runs.append(("ridge (con espejos)", lambda: ridge(X_flip, y_flip)))
+    runs.append(("lda alfa=%.1f (sin espejos)" % ALFA, lambda: lda(X_fit, y_fit)))
+    for alpha in (0.3, 0.5, ALFA, 0.9):
+        runs.append(("lda alfa=%.1f (con espejos)" % alpha, lambda a=alpha: lda(X_flip, y_flip, a)))
     done = set()
     if os.path.exists(RESULTADOS + "/comparar.csv"):
         done = set(l.split(",")[0] for l in open(RESULTADOS + "/comparar.csv").read().split("\n") if l)
@@ -312,7 +355,7 @@ def getProba(S:np.ndarray, t:float) -> np.ndarray:
 # elegir t para que las probabilidades sean honestas (la que menos se equivoca en validacion)
 def fitTemperature(S:np.ndarray, y_true:np.ndarray) -> float:
     best_t, best_loss = 1.0, 1e9
-    for t in np.exp(np.linspace(np.log(0.005), np.log(1.0), 60)):
+    for t in np.exp(np.linspace(np.log(0.005), np.log(200.0), 80)):
         p = getProba(S, t)
         loss = -np.log(p[np.arange(len(y_true)), y_true] + 1e-9).mean()
         if loss < best_loss:
@@ -363,8 +406,8 @@ def stepFinal(data:dict, names:list, breeds:list, y:np.ndarray, idx_train:np.nda
     # 1. confianza: modelo entrenado solo con fit, y sus notas en val (fotos que no ha visto)
     scaler = fitScaler(data, fit, CLAVES)
     X, y_tr = getTrainSet(data, y, fit, CLAVES, scaler)
-    W, mu = trainRidge(X, y_tr, 120)
-    S_val = scoreRidge(buildMatrix(data, val, CLAVES, scaler), W, mu)
+    W, bias, mu = trainLDA(X, y_tr, 120)
+    S_val = scoreLDA(buildMatrix(data, val, CLAVES, scaler), W, bias, mu)
     t = fitTemperature(S_val, y[val])
     p_val = getProba(S_val, t)
     ok_val = S_val.argmax(axis=1) == y[val]
@@ -375,10 +418,10 @@ def stepFinal(data:dict, names:list, breeds:list, y:np.ndarray, idx_train:np.nda
     # 2. modelo final: todas las fotos de train (con espejos), medido en test
     scaler = fitScaler(data, idx_train, CLAVES)
     X, y_tr = getTrainSet(data, y, idx_train, CLAVES, scaler)
-    W, mu = trainRidge(X, y_tr, 120)
+    W, bias, mu = trainLDA(X, y_tr, 120)
     del X
     X_test = buildMatrix(data, idx_test, CLAVES, scaler)
-    S = scoreRidge(X_test, W, mu)
+    S = scoreLDA(X_test, W, bias, mu)
     top1, top3 = getAccuracy(S, y[idx_test])
     print("TEST (", len(idx_test), "fotos ): top1 %.4f top3 %.4f" % (top1, top3), flush=True)
     saveRow("final.csv", ["test", len(idx_test), "%.4f" % top1, "%.4f" % top3])
@@ -444,13 +487,13 @@ def stepFinal(data:dict, names:list, breeds:list, y:np.ndarray, idx_train:np.nda
             mean, std = scaler[key]
             Xd.append(((x - mean) / std / np.sqrt(x.shape[1])).astype(np.float32))
         yd = np.array([breeds.index(info[keep[i]][0]) for i in keep_test])
-        t1, t3 = getAccuracy(scoreRidge(np.hstack(Xd), W, mu), yd)
+        t1, t3 = getAccuracy(scoreLDA(np.hstack(Xd), W, bias, mu), yd)
         saveRow("final.csv", ["test_descartadas", len(yd), "%.4f" % t1, "%.4f" % t3])
         print("descartadas (desastres) en test: %d fotos top1 %.3f top3 %.3f" % (len(yd), t1, t3), flush=True)
 
     # 6. guardar el modelo para reconocer_raza.py
     os.makedirs(modelo, exist_ok=True)
-    pickle.dump({"breeds": breeds, "keys": CLAVES, "scaler": scaler, "W": W, "mu": mu, "t": t, "thr": thr}, open(modelo + "/modelo.pkl", "wb"))
+    pickle.dump({"breeds": breeds, "keys": CLAVES, "scaler": scaler, "W": W, "bias": bias, "mu": mu, "t": t, "thr": thr}, open(modelo + "/modelo.pkl", "wb"))
     print("modelo guardado", flush=True)
 
 
@@ -480,8 +523,8 @@ def stepBreeds(y:np.ndarray, idx_train:np.ndarray, idx_test:np.ndarray, t_end:fl
             m_te = new_label[y[idx_test]] >= 0
             X = np.vstack([X_all[m_tr], X_all_flip[m_tr]])
             y_tr = np.concatenate([new_label[y[idx_train][m_tr]]] * 2)
-            W, mu = trainRidge(X, y_tr, n)
-            top1, top3 = getAccuracy(scoreRidge(X_test[m_te], W, mu), new_label[y[idx_test][m_te]])
+            W, bias, mu = trainLDA(X, y_tr, n)
+            top1, top3 = getAccuracy(scoreLDA(X_test[m_te], W, bias, mu), new_label[y[idx_test][m_te]])
             saveRow("acierto_vs_razas.csv", [n, seed, "%.4f" % top1, "%.4f" % top3])
             print("razas", n, "orden", seed, "top1 %.3f top3 %.3f" % (top1, top3), flush=True)
 
