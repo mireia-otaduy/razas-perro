@@ -55,6 +55,21 @@ CSS = """
 .stMarkdown p, .stMarkdown li {font-size: 1.12rem;}
 [data-baseweb="tab-list"] button {padding: 0.9rem 1.6rem !important; height: auto !important;}
 [data-baseweb="tab-list"] button p, [data-baseweb="tab-list"] button div {font-size: 1.45rem !important; font-weight: 600 !important;}
+
+/* tamanos de letra coherentes: texto 1.2rem, titulos de seccion 1.7rem, pestanas 1.4rem */
+.stApp, .stApp p, .stApp li, .stApp td, .stApp th {font-size: 1.2rem;}
+.hero p {font-size: 1.25rem;}
+.tips, .tips li, .note, .note div {font-size: 1.2rem !important;}
+.tips h3 {font-size: 1.7rem !important;}
+.upload-title, .result-head h2 {font-size: 1.7rem !important;}
+.result-head p {font-size: 1.2rem !important;}
+.card .name {font-size: 1.5rem !important;}
+[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 1.2rem !important;}
+[data-testid="stAlert"] p, [data-testid="stAlert"] div {font-size: 1.2rem !important;}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {font-size: 1.1rem !important;}
+.stTabs button, .stTabs button *, [data-baseweb="tab-list"] button, [data-baseweb="tab-list"] button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
+.stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
+.stApp h3 {font-size: 1.7rem !important;}
 </style>
 """
 
