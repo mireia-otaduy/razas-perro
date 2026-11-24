@@ -134,14 +134,13 @@ def getSteps(img:np.ndarray, result:np.ndarray, result_mask:np.ndarray) -> dict:
 def showRecognize() -> None:
     st.markdown("""
 <div class="tips">
-<h3>📸 La foto ideal</h3>
-Si puedes elegir, una foto así suele funcionar genial:
+<h3>Recomendaciones para la foto</h3>
+Para un mejor resultado:
 <ul>
-<li>Un solo perro, de frente y con la cara bien a la vista.</li>
-<li>Con el cuerpo entero (o casi) y sin personas alrededor.</li>
-<li>Nítida y con buena luz.</li>
+<li>Un solo perro, de frente y con la cara visible.</li>
+<li>Cuerpo entero (o casi) y sin personas alrededor.</li>
+<li>Imagen nítida y con buena luz.</li>
 </ul>
-Si no la tienes así, también puedes probar 😉
 </div>
 """, unsafe_allow_html=True)
     st.markdown('<div class="upload-title">📷 Sube la foto de tu perro</div>', unsafe_allow_html=True)
