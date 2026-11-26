@@ -36,13 +36,14 @@ CSS = """
 [data-testid="stHeaderActionElements"], .stApp h1 a, .stApp h2 a, .stApp h3 a {display: none !important;}
 [data-testid="stAlert"] p, [data-testid="stAlert"] div {font-size: 1.2rem !important;}
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {font-size: 1.1rem !important;}
-[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 1.2rem !important;}
+[data-testid="stFileUploader"] section {padding: 0.6rem 0.9rem !important;}
+[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 0.95rem !important;}
+[data-testid="stFileUploader"] button {padding: 0.25rem 0.8rem !important; min-height: 2.2rem !important;}
 .stTabs button, .stTabs button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
 .stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 
-.stButton, [data-testid="stButton"] {width: 100% !important;}
-.stButton > button, [data-testid="stButton"] > button {width: 100% !important; min-height: 3rem; padding: 0.3rem 0.5rem;}
-.stButton > button p, [data-testid="stButton"] > button p {font-size: 0.95rem !important; font-weight: 600; line-height: 1.2; margin: 0; text-align: center;}
+[data-testid="stButton"] button {width: 100% !important; height: 3.2rem; padding: 0.2rem 0.3rem !important; display: flex; align-items: center; justify-content: center;}
+[data-testid="stButton"] button div, [data-testid="stButton"] button p {width: 100%; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; text-align: center; margin: 0; font-size: 0.9rem !important; font-weight: 600; line-height: 1.15;}
 
 .hero {background: linear-gradient(135deg, #1f4d3a 0%, #3f8160 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
@@ -171,7 +172,11 @@ def showExamples() -> None:
     cols = st.columns(len(names))
     for col, name in zip(cols, names):
         col.image(getThumbnail(EJEMPLOS + "/" + name))
-        col.button(R.prettyName(name[:-4]).title(), key="ejemplo_" + name, on_click=useExample, args=(name,))
+        label = R.prettyName(name[:-4]).title()
+        try:
+            col.button(label, key="ejemplo_" + name, on_click=useExample, args=(name,), width="stretch")
+        except TypeError:    # versiones antiguas de streamlit
+            col.button(label, key="ejemplo_" + name, on_click=useExample, args=(name,), use_container_width=True)
 
 
 # bytes de la foto que se esta usando (None si todavia no hay)
