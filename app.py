@@ -36,9 +36,9 @@ CSS = """
 [data-testid="stHeaderActionElements"], .stApp h1 a, .stApp h2 a, .stApp h3 a {display: none !important;}
 [data-testid="stAlert"] p, [data-testid="stAlert"] div {font-size: 1.2rem !important;}
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {font-size: 1.1rem !important;}
-[data-testid="stFileUploader"] section {padding: 0.6rem 0.9rem !important;}
-[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 0.95rem !important;}
-[data-testid="stFileUploader"] button {padding: 0.25rem 0.8rem !important; min-height: 2.2rem !important;}
+[data-testid="stFileUploader"] section {padding: 0.4rem 0.7rem !important; min-height: 0 !important;}
+[data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 0.85rem !important;}
+[data-testid="stFileUploader"] button {padding: 0.15rem 0.6rem !important; min-height: 1.9rem !important; height: auto !important; font-weight: 500 !important;}
 .stTabs button, .stTabs button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
 .stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 
