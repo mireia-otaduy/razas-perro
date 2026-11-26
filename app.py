@@ -39,8 +39,8 @@ CSS = """
 [data-testid="stFileUploader"] section {padding: 0.4rem 0.7rem !important; min-height: 0 !important;}
 [data-testid="stFileUploader"] section, [data-testid="stFileUploader"] section * {font-size: 0.85rem !important;}
 [data-testid="stFileUploader"] button {padding: 0.15rem 0.6rem !important; min-height: 1.9rem !important; height: auto !important; font-weight: 500 !important;}
-.stTabs button, .stTabs button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
-.stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
+button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
+button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 
 [data-testid="stButton"] button {width: 100% !important; height: 3.2rem; padding: 0.2rem 0.3rem !important; display: flex; align-items: center; justify-content: center;}
 [data-testid="stButton"] button div, [data-testid="stButton"] button p {width: 100%; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; text-align: center; margin: 0; font-size: 0.9rem !important; font-weight: 600; line-height: 1.15;}
