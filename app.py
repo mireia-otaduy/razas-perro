@@ -40,6 +40,9 @@ CSS = """
 .stTabs button, .stTabs button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
 .stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 
+.stButton > button {width: 100%; min-height: 3.4rem; padding: 0.4rem 0.6rem;}
+.stButton > button p {font-size: 1.05rem !important; line-height: 1.2; white-space: normal !important; text-align: center;}
+
 .hero {background: linear-gradient(135deg, #1f4d3a 0%, #3f8160 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
 .hero p {color: #e3f1e9; font-size: 1.25rem; margin: 0.6rem 0 0 0;}
@@ -148,6 +151,16 @@ def useExample(name:str) -> None:
     st.session_state["source"] = ("ejemplo", name)
 
 
+# miniatura cuadrada de una foto de ejemplo (todas del mismo tamano para que queden alineadas)
+def getThumbnail(path:str) -> np.ndarray:
+    img = cv.imread(path)
+    h, w = img.shape[:2]
+    side = min(h, w)
+    y, x = (h - side) // 2, (w - side) // 2
+    square = img[y:y + side, x:x + side]
+    return cv.cvtColor(cv.resize(square, (300, 300), interpolation=cv.INTER_AREA), cv.COLOR_BGR2RGB)
+
+
 # fotos de ejemplo (para probar sin tener una foto a mano)
 def showExamples() -> None:
     names = sorted(os.listdir(EJEMPLOS)) if os.path.isdir(EJEMPLOS) else []
@@ -156,7 +169,7 @@ def showExamples() -> None:
     st.markdown('<div class="title">O prueba con un ejemplo</div>', unsafe_allow_html=True)
     cols = st.columns(len(names))
     for col, name in zip(cols, names):
-        col.image(EJEMPLOS + "/" + name)
+        col.image(getThumbnail(EJEMPLOS + "/" + name))
         col.button(R.prettyName(name[:-4]).title(), key="ejemplo_" + name, on_click=useExample, args=(name,))
 
 
