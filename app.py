@@ -52,6 +52,7 @@ button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 .tips h3 {color: #1f4d3a; margin: 0 0 0.4rem 0; padding: 0;}
 .tips ul {margin: 0.3rem 0 0.4rem 0; padding-left: 1.2rem;}
 .tips li {margin: 0.2rem 0; color: #22332a;}
+hr.separador {border: none; border-top: 3px solid #4caf50; margin: 1.6rem 0 0.2rem 0; opacity: 0.8;}
 .title {color: #1f4d3a; font-size: 1.7rem; font-weight: 700; line-height: 1.25; margin: 1.4rem 0 0.5rem 0;}
 .subtitle {color: #4b5d53; margin: 0 0 1rem 0;}
 .card {display: flex; align-items: center; gap: 1.1rem; background: #ffffff; color: #1f2937; border-radius: 8px; padding: 1.1rem 1.5rem; margin: 0.7rem 0; border: 1px solid #d5e5db;}
@@ -217,6 +218,8 @@ Para un mejor resultado:
         st.session_state["analisis"] = a
     a = st.session_state["analisis"]
     st.image(toRGB(a["img"]), caption="Tu foto", width=380)
+    # linea verde para separar tu foto de lo que sale a partir de aqui
+    st.markdown('<hr class="separador">', unsafe_allow_html=True)
     st.markdown('<div class="title">🐾 Tu perro se parece a estas 3 razas</div>'
                 '<div class="subtitle">Las razas más parecidas, sin ningún orden concreto.</div>', unsafe_allow_html=True)
     # por orden alfabetico, para que no parezca que hay una primera y una ultima
