@@ -13,8 +13,8 @@ import clasificar as CL
 # pasos (los mismos que se hicieron con el dataset):
 #   1. recortar al perro: saliency + grabcut, fondo negro, 256x256   (preparar_dataset.py)
 #   2. sacar los descriptores: color, hog, lbp, bow, fisher y color local (descriptores.py)
-#   3. el clasificador (lda) da una nota por raza                    (clasificar.py)
-#   4. respuesta: las 3 razas que mas se parecen, de mas a menos
+#   3. el clasificador (lda) da una nota a cada raza                  (clasificar.py)
+#   4. respuesta: las 3 razas con mas nota
 #
 # uso:  python reconocer_raza.py C:/ruta/foto_de_mi_perro.jpg
 #
@@ -31,7 +31,7 @@ modelo = "modelo/modelo.pkl"        # modelo entrenado por clasificar.py
 MOSTRAR = "--sin-ventanas" not in sys.argv                # ensenar la foto y el recorte en ventanas
 
 
-# cargar el modelo entrenado (pesos, escalado, razas, temperatura y umbral)
+# cargar el modelo entrenado (pesos, escalado y razas)
 def loadModel(path:str) -> dict:
     f = open(path, "rb")
     model = pickle.load(f)
@@ -44,8 +44,8 @@ def prettyName(breed:str) -> str:
     return breed.replace("_", " ")
 
 
-# probabilidad de cada raza para una foto
-# devuelve tambien el recorte y si el recorte es dudoso
+# nota de cada raza para una foto (cuanto mas alta, mas se parece)
+# devuelve tambien el recorte, su mascara y si el recorte es dudoso
 def predictBreed(img:cv.Mat, model:dict) -> tuple:
     # paso 1: recorte del perro (fondo negro, 256x256) y su mascara
     result, result_mask, doubt, box = P.processImage(img)
@@ -54,11 +54,10 @@ def predictBreed(img:cv.Mat, model:dict) -> tuple:
     data = {}
     for key in d:
         data[key] = np.array([d[key]], np.float32)
-    # paso 3: nota de cada raza y paso a probabilidad
+    # paso 3: nota de cada raza
     X = CL.buildMatrix(data, np.array([0]), model["keys"], model["scaler"])
-    S = CL.scoreLDA(X, model["W"], model["bias"], model["mu"])
-    proba = CL.getProba(S, model["t"])[0]
-    return proba, result, doubt
+    S = CL.scoreLDA(X, model["W"], model["bias"], model["mu"])[0]
+    return S, result, result_mask, doubt
 
 
 def main():
@@ -71,11 +70,11 @@ def main():
         sys.exit("Could not read the image.")
     model = loadModel(modelo)
 
-    proba, result, doubt = predictBreed(img, model)
+    scores, result, result_mask, doubt = predictBreed(img, model)
     print("foto:", path)
-    # las 3 razas mas probables
-    print("las 3 razas que mas se parecen (de mas a menos):")
-    for i in np.argsort(-proba)[:3]:
+    # las 3 razas con mas nota
+    print("las 3 razas que mas se parecen:")
+    for i in np.argsort(-scores)[:3]:
         print("  ", prettyName(model["breeds"][i]))
     if doubt:
         print("aviso: el recorte del perro no es muy fiable, prueba con otra foto (un solo perro, de frente y sin mucho fondo)")

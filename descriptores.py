@@ -16,8 +16,8 @@ from sklearn.mixture import GaussianMixture
 #   lbp    -> textura del pelo (local binary patterns)     (tema 7, solo nombrado)
 #   lbp2   -> lo mismo, pero mirando vecinos un poco mas lejos
 #   bow    -> bag of words con sift + k-means              (practica 5.1, temas 5 y 7)
-#   fisher -> fisher vectors con sift (EXTRA, no visto en clase)
-#   lcolor -> fisher vectors del color local: parches de 16x16 y su color en lab (EXTRA, no visto en clase)
+#   fisher -> fisher vectors con sift (extra, no visto en clase)
+#   lcolor -> fisher vectors del color local: parches de 16x16 y su color en lab (extra, no visto en clase)
 #
 # fisher vectors: como el bag of words, pero en vez de solo contar palabras guarda
 # tambien cuanto se aleja cada descriptor del centro de su grupo. ocupa mas, pero
@@ -44,6 +44,7 @@ fisher_modelo = "modelo/fisher.npz"       # pca y gaussianas de los fisher vecto
 fisher_color_modelo = "modelo/fisher_color.npz"   # gaussianas del color local
 SIZE = 256    # tamano de las fotos
 K = 1000      # numero de palabras del vocabulario
+ITER = 20     # vueltas de k-means
 D_PCA = 64    # numeros por descriptor sift despues del pca (fisher)
 K_GMM = 32    # numero de gaussianas (fisher)
 PARCHE = 16   # tamano de los parches de color local
@@ -152,35 +153,40 @@ def getBoW(des:np.ndarray, vocab:np.ndarray) -> np.ndarray:
 
 
 
-# fisher vectors (extra, no visto en clase)
-#   1. rootsift: sift dividido entre su suma y con raiz cuadrada (funciona mejor que el sift normal)
-#   2. pca: de 128 numeros por descriptor a 64
-#   3. cada descriptor "reparte" su peso entre las K_GMM gaussianas (la que mas se le parece se lleva mas)
-#   4. por cada gaussiana guardamos cuanto se aleja la media de los descriptores de su centro
-#      y cuanto cambia su varianza -> 2 * K_GMM * D_PCA numeros
-#   5. raiz cuadrada con signo y normalizar (asi no mandan los valores muy grandes)
-def getFisher(des:np.ndarray, fisher:dict) -> np.ndarray:
-    size = 2 * K_GMM * D_PCA
-    if len(des) < 2:
-        return np.zeros(size, np.float32)
-    x = np.sqrt(des / np.maximum(des.sum(axis=1, keepdims=True), 1e-7))
-    x = (x - fisher["mean_pca"]) @ fisher["components"].T
-    w, mu, var = fisher["weights"], fisher["means"], fisher["variances"]
-    # probabilidad de que cada descriptor sea de cada gaussiana (paso 3)
+# parte comun de los fisher vectors
+# x = descriptores (uno por fila); w, mu, var = pesos, centros y varianzas de las gaussianas
+#   1. cada descriptor "reparte" su peso entre las K_GMM gaussianas (la que mas se le parece se lleva mas)
+#   2. por cada gaussiana guardamos cuanto se aleja la media de los descriptores de su centro
+#      y cuanto cambia su varianza -> 2 * K_GMM * (numeros por descriptor)
+def getFisherVector(x:np.ndarray, w:np.ndarray, mu:np.ndarray, var:np.ndarray) -> np.ndarray:
+    # probabilidad de que cada descriptor sea de cada gaussiana (paso 1)
     maha = (x*x) @ (1/var).T - 2 * x @ (mu/var).T + (mu*mu/var).sum(axis=1)[np.newaxis, :]
     logp = -0.5 * (maha + np.log(var).sum(axis=1)[np.newaxis, :]) + np.log(w)[np.newaxis, :]
     logp = logp - logp.max(axis=1, keepdims=True)
     gamma = np.exp(logp)
     gamma = gamma / gamma.sum(axis=1, keepdims=True)
-    # paso 4
+    # paso 2
     n = len(x)
     s0 = gamma.sum(axis=0)
     s1 = gamma.T @ x
     s2 = gamma.T @ (x*x)
     g_mu = (s1 - s0[:, np.newaxis]*mu) / (np.sqrt(var) * np.sqrt(w)[:, np.newaxis] * n)
     g_var = (s2 - 2*mu*s1 + (mu*mu - var)*s0[:, np.newaxis]) / (var * np.sqrt(2*w)[:, np.newaxis] * n)
-    fv = np.concatenate([g_mu.flatten(), g_var.flatten()])
-    # paso 5
+    return np.concatenate([g_mu.flatten(), g_var.flatten()])
+
+
+# fisher vectors de sift (extra, no visto en clase): como el bag of words pero guardando mas informacion
+#   1. rootsift: sift dividido entre su suma y con raiz cuadrada (funciona mejor que el sift normal)
+#   2. pca: de 128 numeros por descriptor a 64
+#   3. fisher vector (getFisherVector)
+#   4. raiz cuadrada con signo y normalizar (asi no mandan los valores muy grandes)
+def getFisher(des:np.ndarray, fisher:dict) -> np.ndarray:
+    size = 2 * K_GMM * D_PCA
+    if len(des) < 2:
+        return np.zeros(size, np.float32)
+    x = np.sqrt(des / np.maximum(des.sum(axis=1, keepdims=True), 1e-7))
+    x = (x - fisher["mean_pca"]) @ fisher["components"].T
+    fv = getFisherVector(x, fisher["weights"], fisher["means"], fisher["variances"])
     fv = np.sign(fv) * np.sqrt(np.abs(fv))
     return (fv / max(np.linalg.norm(fv), 1e-7)).astype(np.float32)
 
@@ -207,29 +213,16 @@ def getLocalColor(img:cv.Mat, mask:cv.Mat) -> np.ndarray:
     return np.array(patches, np.float32)
 
 
-# fisher vectors del color local (extra, igual que el de sift pero sin pca porque ya son solo 12 numeros)
+# fisher vectors del color local (extra): igual que el de sift pero sin pca (ya son solo 12 numeros)
 #   1. estandarizar los 12 numeros de cada parche (con la media y desviacion de las fotos de entrenamiento)
-#   2. cada parche reparte su peso entre las K_GMM gaussianas
-#   3. por cada gaussiana guardamos cuanto se aleja la media de los parches de su centro y cuanto cambia su varianza
-#   4. raiz cuadrada con signo (asi no mandan los valores muy grandes)
+#   2. fisher vector (getFisherVector)
+#   3. raiz cuadrada con signo (asi no mandan los valores muy grandes)
 def getFisherColor(patches:np.ndarray, fc:dict) -> np.ndarray:
     size = 2 * K_GMM * 12
     if len(patches) < 2:
         return np.zeros(size, np.float32)
     x = (patches - fc["mean"]) / fc["std"]
-    w, mu, var = fc["weights"], fc["means"], fc["variances"]
-    maha = (x*x) @ (1/var).T - 2 * x @ (mu/var).T + (mu*mu/var).sum(axis=1)[np.newaxis, :]
-    logp = -0.5 * (maha + np.log(var).sum(axis=1)[np.newaxis, :]) + np.log(w)[np.newaxis, :]
-    logp = logp - logp.max(axis=1, keepdims=True)
-    gamma = np.exp(logp)
-    gamma = gamma / gamma.sum(axis=1, keepdims=True)
-    n = len(x)
-    s0 = gamma.sum(axis=0)
-    s1 = gamma.T @ x
-    s2 = gamma.T @ (x*x)
-    g_mu = (s1 - s0[:, np.newaxis]*mu) / (np.sqrt(var) * np.sqrt(w)[:, np.newaxis] * n)
-    g_var = (s2 - 2*mu*s1 + (mu*mu - var)*s0[:, np.newaxis]) / (var * np.sqrt(2*w)[:, np.newaxis] * n)
-    fv = np.concatenate([g_mu.flatten(), g_var.flatten()])
+    fv = getFisherVector(x, fc["weights"], fc["means"], fc["variances"])
     return (np.sign(fv) * np.sqrt(np.abs(fv))).astype(np.float32)
 
 
@@ -280,7 +273,7 @@ def sampleDescriptors(name:str) -> np.ndarray:
     return des
 
 
-# paso 1: descriptores sift de una de cada 4 fotos de entrenamiento (se guardan para los pasos 2 y 3)
+# paso 1: descriptores sift de una de cada 4 fotos de entrenamiento (se usan en los pasos 2 y 3)
 # se hace en trozos de 200 fotos, cada uno en su fichero, para poder parar y seguir
 # devuelve True si ya estan todos los trozos
 def stepSamples(names_train:list, t_end:float) -> bool:
@@ -312,7 +305,6 @@ def stepSamples(names_train:list, t_end:float) -> bool:
 #   3. cada centro pasa a ser la media de sus descriptores
 #   4. repetimos 2 y 3 varias veces
 # devuelve True si ya ha terminado
-ITER = 20     # vueltas de k-means
 def stepVocabulary(t_end:float) -> bool:
     estado = muestras[:-4] + "_kmeans.npz"
     des = np.load(muestras)
@@ -344,7 +336,7 @@ def stepVocabulary(t_end:float) -> bool:
     return True
 
 
-# paso 3: pca y gaussianas para los fisher vectors (extra)
+# paso 3: pca y gaussianas para los fisher vectors de sift (extra)
 def stepFisher() -> None:
     des = np.load(muestras)
     x = np.sqrt(des / np.maximum(des.sum(axis=1, keepdims=True), 1e-7))
@@ -366,7 +358,7 @@ def samplePatches(name:str) -> np.ndarray:
     return patches
 
 
-# paso 3b: gaussianas para los fisher vectors del color local (extra); igual que el paso 3 pero con los parches
+# paso 4: gaussianas para los fisher vectors del color local (extra); igual que el paso 3 pero con los parches
 def stepFisherColor(names_train:list) -> None:
     with Pool(os.cpu_count()) as pool:
         parts = pool.map(samplePatches, names_train[::4], chunksize=20)
@@ -376,40 +368,6 @@ def stepFisherColor(names_train:list) -> None:
     gmm.fit((x - mean) / std)
     np.savez(fisher_color_modelo, mean=mean, std=std, weights=gmm.weights_, means=gmm.means_, variances=gmm.covariances_)
     print("fisher del color local hecho:", gmm.means_.shape, "con", len(x), "parches", flush=True)
-
-
-# anadir el color local a un .npz que ya estaba hecho (la usa el Pool)
-# task = (nombre de la foto, carpeta de fotos, carpeta de mascaras, carpeta de los .npz)
-def addColorFile(task:tuple) -> int:
-    name, folder, folder_mask, out = task
-    path = out + "/" + name + ".npz"
-    d = np.load(path)
-    if "lcolor" in d.files:
-        return 0
-    d = {key: d[key] for key in d.files}
-    img = cv.imread(folder + "/" + name + ".png")
-    mask = cv.imread(folder_mask + "/" + name + ".png", cv.IMREAD_GRAYSCALE)
-    d["lcolor"] = getFisherColor(getLocalColor(img, mask), loadVocab()[2])
-    np.savez(path + ".tmp.npz", **d)
-    os.replace(path + ".tmp.npz", path)
-    return 1
-
-
-# anadir el color local a todos los .npz de una carpeta (se salta los que ya lo tienen)
-def addColorFolder(folder:str, folder_mask:str, out:str, t_end:float) -> None:
-    names = [n[:-4] for n in sorted(os.listdir(out)) if n.endswith(".npz") and not n.endswith(".tmp.npz")]
-    tasks = [(n, folder, folder_mask, out) for n in names]
-    print(out, "-> comprobando el color local de", len(tasks), "fotos", flush=True)
-    batch = 40 * os.cpu_count()
-    new = 0
-    with Pool(os.cpu_count()) as pool:
-        for i in range(0, len(tasks), batch):
-            if t_end is not None and time.time() > t_end:
-                print("se acabo el tiempo, vuelve a ejecutar para seguir (llevo", i, "fotos revisadas,", new, "nuevas)", flush=True)
-                return
-            new += sum(pool.map(addColorFile, tasks[i:i+batch], chunksize=8))
-            if (i // batch) % 25 == 0:
-                print(i, "revisadas,", new, "nuevas", flush=True)
 
 
 # describir una foto del disco y guardar su .npz (la usa el Pool)
@@ -452,7 +410,7 @@ def main():
     names_train = [n for n, s in zip(names, splits) if s == "train"]
     print("fotos:", len(names), "| entrenamiento:", len(names_train), "| razas:", len(breeds), flush=True)
 
-    # pasos 1, 2, 3 y 3b: vocabularios (solo con fotos de entrenamiento; se saltan si ya estan hechos)
+    # pasos 1 a 4: vocabularios (solo con fotos de entrenamiento; se saltan si ya estan hechos)
     if not os.path.exists(muestras):
         if not stepSamples(names_train, t_end):
             return
@@ -466,14 +424,12 @@ def main():
     if t_end is not None and time.time() > t_end:
         return
 
-    # paso 4: descriptores de todas las fotos del dataset (las de entrenamiento tambien en espejo)
+    # paso 5: descriptores de todas las fotos del dataset (las de entrenamiento tambien en espejo)
     describeFolder(carpeta, carpeta_mask, salida, set(names_train), t_end)
-    addColorFolder(carpeta, carpeta_mask, salida, t_end)       # (el color local se anadio despues: lo ponen las fotos que ya estaban hechas)
 
-    # paso 5: descriptores de las fotos descartadas (solo para probar luego que pasa con ellas)
+    # paso 6: descriptores de las fotos descartadas (solo para probar luego que pasa con ellas)
     if os.path.isdir(descartadas):
         describeFolder(descartadas, descartadas_mask, salida_descartadas, set(), t_end)
-        addColorFolder(descartadas, descartadas_mask, salida_descartadas, t_end)
     print("terminado", flush=True)
 
 
