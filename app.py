@@ -40,8 +40,9 @@ CSS = """
 .stTabs button, .stTabs button *, button[role="tab"], button[role="tab"] * {font-size: 1.4rem !important; font-weight: 600 !important;}
 .stTabs button, button[role="tab"] {padding: 0.9rem 1.6rem !important; height: auto !important;}
 
-.stButton > button {width: 100%; min-height: 3.4rem; padding: 0.4rem 0.6rem;}
-.stButton > button p {font-size: 1.05rem !important; line-height: 1.2; white-space: normal !important; text-align: center;}
+.stButton, [data-testid="stButton"] {width: 100% !important;}
+.stButton > button, [data-testid="stButton"] > button {width: 100% !important; min-height: 3rem; padding: 0.3rem 0.5rem;}
+.stButton > button p, [data-testid="stButton"] > button p {font-size: 0.95rem !important; font-weight: 600; line-height: 1.2; margin: 0; text-align: center;}
 
 .hero {background: linear-gradient(135deg, #1f4d3a 0%, #3f8160 100%); border-radius: 12px; padding: 2.2rem 2rem 1.8rem 2rem; margin-bottom: 1.4rem; text-align: center;}
 .hero h1 {color: #ffffff; font-size: 2.2rem; font-weight: 700; margin: 0; padding: 0; line-height: 1.25;}
