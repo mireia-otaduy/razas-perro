@@ -203,7 +203,9 @@ Para un mejor resultado:
 </div>
 """, unsafe_allow_html=True)
     showExamples()
-    st.markdown('<div class="title">📷 O sube la foto de tu perro</div>', unsafe_allow_html=True)
+    # linea verde para separar los ejemplos de subir tu foto
+    st.markdown('<hr class="separador">', unsafe_allow_html=True)
+    st.markdown('<div class="title">📷 Sube la foto de tu perro</div>', unsafe_allow_html=True)
     file = st.file_uploader("Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed", on_change=useUpload)
     key, data = getPhoto(file)
     if data is None:
@@ -218,8 +220,6 @@ Para un mejor resultado:
         st.session_state["analisis"] = a
     a = st.session_state["analisis"]
     st.image(toRGB(a["img"]), caption="Tu foto", width=380)
-    # linea verde para separar tu foto de lo que sale a partir de aqui
-    st.markdown('<hr class="separador">', unsafe_allow_html=True)
     st.markdown('<div class="title">🐾 Tu perro se parece a estas 3 razas</div>'
                 '<div class="subtitle">Las razas más parecidas, sin ningún orden concreto.</div>', unsafe_allow_html=True)
     # por orden alfabetico, para que no parezca que hay una primera y una ultima
