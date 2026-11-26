@@ -169,7 +169,7 @@ def showExamples() -> None:
     names = sorted(os.listdir(EJEMPLOS)) if os.path.isdir(EJEMPLOS) else []
     if len(names) == 0:
         return
-    st.markdown('<div class="title">O prueba con un ejemplo</div>', unsafe_allow_html=True)
+    st.markdown('<div class="title">Prueba con un ejemplo</div>', unsafe_allow_html=True)
     cols = st.columns(len(names))
     for col, name in zip(cols, names):
         col.image(getThumbnail(EJEMPLOS + "/" + name))
@@ -202,9 +202,9 @@ Para un mejor resultado:
 </ul>
 </div>
 """, unsafe_allow_html=True)
-    st.markdown('<div class="title">📷 Sube la foto de tu perro</div>', unsafe_allow_html=True)
-    file = st.file_uploader("Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed", on_change=useUpload)
     showExamples()
+    st.markdown('<div class="title">📷 O sube la foto de tu perro</div>', unsafe_allow_html=True)
+    file = st.file_uploader("Sube la foto de tu perro", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed", on_change=useUpload)
     key, data = getPhoto(file)
     if data is None:
         return
